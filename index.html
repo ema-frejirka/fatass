@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Birthday Celebration</title>
+    <style>
+    :root {
+        --bg-primary: #fafafa;
+        --bg-secondary: #f0f0f0;
+        --text-primary: #1a1a1a;
+        --text-secondary: #666666;
+        --accent: #006884;
+        --accent-hover: #004d62;
+        --overlay-bg: rgba(0, 0, 0, 0.4);
+        --card-bg: #ffffff;
+        --shadow: 0 4px 20px rgba(0,0,0,0.08);
+        --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    [data-theme="dark"] {
+        --bg-primary: #0d0d0d;
+        --bg-secondary: #1a1a1a;
+        --text-primary: #f0f0f0;
+        --text-secondary: #a0a0a0;
+        --card-bg: #141414;
+        --shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    /* ===== MOBILE FIRST APPROACH ===== */
+    html {
+        overflow-x: hidden;
+        overflow-y: auto; /* Always allow vertical scrolling */
+        height: 100%;
+    }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.6;
+        overflow-x: hidden;
+        overflow-y: auto; /* Always allow vertical scrolling */
+        min-height: 100vh;
+        position: relative;
+        margin: 0;
+        padding: 0;
+        transition: background var(--transition), color var(--transition);
+    }
+
+    /* Sections - Mobile First */
+    .section {
+        min-height: auto; /* Allow natural height on mobile */
+        padding: 60px 20px;
+        position: relative;
+    }
+
+    /* ===== DESKTOP ENHANCEMENTS ===== */
+    @media (min-width: 768px) {
+        html {
+            scroll-snap-type: y mandatory;
+        }
+        
+        .section {
+            min-height: 100vh;
+            scroll-snap-align: start;
+        }
+    }
+
+    /* Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.9);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .modal.show { display: flex; }
+
+    .modal-content {
+        position: relative;
+        max-width: 90vw;
+        max-height: 90vh;
+        animation: scaleIn 0.3s ease;
+    }
+
+    @keyframes scaleIn {
+        from { transform: scale(0.8); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-content img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+
+    .modal-close {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 2rem;
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.5);
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-close:hover { background: rgba(0,0,0,0.8); }
+
+    /* Theme Toggle */
+    .theme-toggle {
+        position: fixed; top: 20px; right: 20px; z-index: 1000;
+        background: var(--card-bg); border: none; width: 48px; height: 48px;
+        border-radius: 50%; cursor: pointer; display: flex; align-items: center;
+        justify-content: center; box-shadow: var(--shadow); transition: transform 0.3s;
+    }
+    .theme-toggle:hover { transform: scale(1.1); }
+    .theme-toggle svg { width: 24px; height: 24px; fill: var(--accent); }
+    .theme-toggle .sun-icon { display: none; }
+    .theme-toggle .moon-icon { display: block; }
+    [data-theme="dark"] .theme-toggle .sun-icon { display: block; }
+    [data-theme="dark"] .theme-toggle .moon-icon { display: none; }
+
+    /* Hero */
+    .hero {
+        height: 100vh; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; text-align: center;
+        padding: 40px 20px; scroll-snap-align: start;
+        background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary));
+        position: relative; overflow: hidden;
+    }
+    
+    @media (min-width: 768px) {
+        .hero { scroll-snap-align: start; }
+    }
+    
+    .hero::before {
+        content: ''; position: absolute; width: 200%; height: 200%;
+        background: radial-gradient(circle at 30% 30%, var(--accent) 0%, transparent 50%),
+                    radial-gradient(circle at 70% 70%, var(--accent) 0%, transparent 40%);
+        opacity: 0.03; animation: float 20s ease-in-out infinite;
+    }
+    @keyframes float { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(-20px, -20px); } }
+    .hero-content { position: relative; z-index: 1; opacity: 0; transform: translateY(30px); animation: fadeUp 1s forwards 0.3s; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    .hero h1 { font-size: clamp(2.5rem, 8vw, 5rem); font-weight: 200; letter-spacing: 0.1em; margin-bottom: 10px; background: linear-gradient(135deg, var(--text-primary), var(--accent)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero .date { font-size: clamp(1rem, 4vw, 1.5rem); font-weight: 300; color: var(--text-secondary); letter-spacing: 0.2em; margin-bottom: 40px; }
+    .scroll-hint { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--text-secondary); font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0; animation: fadeIn 1s forwards 1.5s; }
+    @keyframes fadeIn { to { opacity: 0.6; } }
+    .scroll-hint svg { width: 24px; height: 24px; fill: var(--text-secondary); animation: bounce 2s ease-in-out infinite; }
+    @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(8px); } }
+
+    /* Sections */
+    .section-inner { width: 100%; max-width: 100%; }
+    .section-title { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 20px; padding: 0 20px; opacity: 0; transform: translateY(20px); transition: opacity 0.6s, transform 0.6s; }
+    .section.visible .section-title { opacity: 1; transform: translateY(0); }
+
+    /* Carousel */
+    .carousel { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; gap: 16px; padding: 20px; }
+    .carousel::-webkit-scrollbar { display: none; }
+    .carousel-item { flex: 0 0 85%; max-width: 400px; scroll-snap-align: center; position: relative; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); background: var(--card-bg); opacity: 0; transform: translateY(30px); transition: opacity 0.6s, transform 0.6s; cursor: pointer; }
+    .carousel-item.visible { opacity: 1; transform: translateY(0); }
+    .carousel-item:nth-child(1) { transition-delay: 0.1s; }
+    .carousel-item:nth-child(2) { transition-delay: 0.2s; }
+    .carousel-item:nth-child(3) { transition-delay: 0.3s; }
+    .carousel-item img { width: 100%; height: 400px; object-fit: cover; background: var(--bg-secondary); transition: transform 0.3s ease; }
+    .carousel-item:hover img { transform: scale(1.05); }
+    .carousel-item .placeholder { width: 100%; height: 400px; display: none; align-items: center; justify-content: center; background: var(--bg-secondary); color: var(--text-secondary); }
+    .carousel-item img.error { display: none; }
+    .carousel-item img.error + .placeholder { display: flex; }
+    .carousel-overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 30px 20px; background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); }
+    .carousel-cta { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--overlay-bg); color: #fff; text-decoration: none; border-radius: 30px; font-size: 0.875rem; font-weight: 500; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.2); }
+    .carousel-cta:hover { background: var(--accent); transform: scale(1.05); }
+    .carousel-cta svg { width: 16px; height: 16px; fill: currentColor; }
+
+    /* Text Items */
+    .text-item { background: var(--card-bg); border-radius: 16px; padding: 40px 30px; margin-bottom: 20px; box-shadow: var(--shadow); text-align: center; }
+    .text-item .text-content { font-size: 1.2rem; line-height: 1.6; color: var(--text-primary); }
+
+    /* Full Sections */
+    .full-section { width: 100%; position: relative; aspect-ratio: 4/5; max-height: 80vh; background: var(--card-bg); margin-bottom: 20px; cursor: pointer; }
+    .full-section img { width: 100%; height: 100%; object-fit: cover; background: var(--bg-secondary); transition: transform 0.3s ease; }
+    .full-section:hover img { transform: scale(1.05); }
+    .full-section .placeholder { width: 100%; height: 100%; display: none; align-items: center; justify-content: center; background: var(--bg-secondary); color: var(--text-secondary); }
+    .full-section img.error { display: none; }
+    .full-section img.error + .placeholder { display: flex; }
+    .full-section .overlay { position: absolute; bottom: 0; left: 0; right: 0; padding: 40px 20px; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent); display: flex; justify-content: center; }
+    .full-cta { padding: 14px 32px; background: var(--accent); color: #fff; text-decoration: none; border-radius: 30px; font-size: 1rem; font-weight: 500; display: inline-flex; align-items: center; gap: 10px; }
+    .full-cta:hover { background: var(--accent-hover); transform: translateY(-2px); }
+    .full-cta svg { width: 18px; height: 18px; fill: currentColor; }
+    .section-caption { position: absolute; top: 20px; left: 20px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: #fff; background: rgba(0,0,0,0.4); padding: 8px 16px; border-radius: 20px; backdrop-filter: blur(10px); }
+
+    .content-text { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); color: #fff; font-size: 0.875rem; line-height: 1.5; }
+
+    /* Message */
+    .message-section { text-align: center; max-width: 600px; margin: 0 auto; }
+    .message-section h2 { font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 200; margin-bottom: 20px; color: var(--accent); }
+    .message-section p { font-size: clamp(1rem, 3vw, 1.125rem); line-height: 1.8; color: var(--text-secondary); }
+
+    /* Footer */
+    .footer { padding: 60px 20px; text-align: center; background: var(--bg-secondary); }
+    .footer p { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 20px; }
+    .footer-link { color: var(--accent); text-decoration: none; font-size: 0.75rem; letter-spacing: 0.1em; cursor: pointer; }
+    .footer-link:hover { opacity: 0.7; }
+
+    /* Admin Styles */
+    .admin-container { display: none; min-height: 100vh; padding: 60px 20px; background: var(--bg-primary); }
+    .admin-container.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .admin-box { width: 100%; max-width: 500px; padding: 40px 20px; }
+    .admin-box h3 { font-size: 1.5rem; font-weight: 300; margin-bottom: 30px; text-align: center; color: var(--accent); }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; }
+    .form-group input, .form-group textarea { width: 100%; padding: 14px 16px; background: var(--card-bg); border: 1px solid var(--bg-secondary); border-radius: 10px; font-size: 1rem; color: var(--text-primary); }
+    .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0, 104, 132, 0.1); }
+    .form-group input.error, .form-group textarea.error { border-color: #ff4444; }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .error-msg { color: #ff4444; font-size: 0.75rem; margin-top: 8px; display: none; }
+    .error-msg.show { display: block; }
+    .file-input { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .file-input input[type="file"] { display: none; }
+    .file-btn { padding: 12px 16px; background: var(--bg-secondary); border: 1px solid var(--bg-secondary); border-radius: 10px; cursor: pointer; font-size: 0.875rem; }
+    .file-btn:hover { background: var(--text-secondary); color: #fff; }
+    .file-preview { margin-top: 10px; max-width: 100%; height: auto; display: none; border-radius: 10px; }
+    .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .checkbox-group input[type="checkbox"] { width: 18px; height: 18px; }
+    .checkbox-group label { font-size: 0.875rem; margin-bottom: 0; }
+    .btn { width: 100%; padding: 16px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: background 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; }
+    .btn:hover { background: var(--accent-hover); }
+    .btn:disabled { opacity: 0.7; cursor: not-allowed; }
+    .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); margin-top: 10px; }
+    .btn-secondary:hover { background: var(--text-secondary); color: #fff; }
+    .btn-success { background: #22c55e; }
+    .btn-success:hover { background: #16a34a; }
+    .admin-list { margin-top: 30px; width: 100%; max-width: 500px; }
+    .admin-item { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+    .admin-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: var(--bg-secondary); }
+    .admin-item-info { flex: 1; min-width: 0; }
+    .admin-item-title { font-size: 0.875rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .admin-item-link { font-size: 0.75rem; color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .admin-item-text { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+    .item-controls { display: flex; flex-direction: column; gap: 8px; }
+    .order-btn { width: 32px; height: 32px; background: var(--bg-secondary); border: none; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .order-btn:hover { background: var(--text-secondary); color: #fff; }
+    .order-btn svg { width: 16px; height: 16px; }
+    .delete-btn { width: 36px; height: 36px; background: #ff4444; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .delete-btn:hover { background: #cc3333; }
+    .delete-btn svg { width: 16px; height: 16px; fill: #fff; }
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.8s, transform 0.8s; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+    
+    /* Progress Bar */
+    .progress-bar {
+        width: 100%;
+        height: 4px;
+        background: var(--bg-secondary);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 15px;
+        display: none;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.3s ease;
+        animation: progress 2s ease-in-out infinite;
+    }
+
+    @keyframes progress {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+    }
+
+    /* Desktop Enhancements */
+    @media (min-width: 768px) {
+        .hero h1 { font-size: 4rem; }
+        .full-section { aspect-ratio: 16/9; }
+        .carousel-item { flex: 0 0 45%; }
+    }
+    
+    @media (min-width: 1024px) {
+        .carousel-item { flex: 0 0 30%; max-width: 500px; }
+    }
+</style>
+    
+</head>
+<body data-theme="light">
+    <!-- Modal for Image Expansion -->
+    <div class="modal" id="imageModal">
+        <button class="modal-close" id="modalClose">&times;</button>
+        <div class="modal-content">
+            <img id="modalImage" src="" alt="">
+        </div>
+    </div>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="moon-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/></svg>
+    </button>
+
+    <section class="hero" id="heroSection">
+        <div class="hero-content">
+            <h1>MARTIN OSLAVA TUTORIAL</h1>
+            <p class="date">16.-17.5. 2026</p>
+        </div>
+        <div class="scroll-hint">
+            <span>Scrolluj fatassaku</span>
+            <svg viewBox="0 0 24 24"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg>
+        </div>
+    </section>
+
+    <section class="section" id="gallerySection">
+        <div class="section-inner">
+            <p class="section-title">Memories</p>
+            <div class="carousel" id="photoCarousel"></div>
+        </div>
+    </section>
+
+    <section class="section" id="momentsSection">
+        <div class="section-inner" id="momentSections"></div>
+    </section>
+
+
+    <footer class="footer" id="footerSection">
+        <p>Tohle vas uz nezajima</p>
+        <span class="footer-link" id="adminLink">Admin Access</span>
+    </footer>
+
+    <div class="admin-container" id="adminLogin">
+        <div class="admin-box">
+            <h3>Admin Access</h3>
+            <div class="form-group">
+                <label for="adminPassword">Password</label>
+                <input type="password" id="adminPassword" placeholder="Enter password">
+                <p class="error-msg" id="loginError">Incorrect password. Please try again.</p>
+            </div>
+            <button class="btn" id="loginBtn">Login</button>
+            <button class="btn btn-secondary" id="backBtn">Back to Site</button>
+        </div>
+    </div>
+
+    <div class="admin-container" id="adminPanel">
+        <div class="admin-box">
+            <h3>Content Management</h3>
+            <div class="checkbox-group">
+                <input type="checkbox" id="textOnly">
+                <label for="textOnly">Text only (no image)</label>
+            </div>
+            <div class="form-group" id="imageGroup">
+                <label for="imageUrl">Image URL or Upload</label>
+                <input type="url" id="imageUrl" placeholder="https://example.com/image.jpg">
+                <div class="file-input">
+                    <button class="file-btn" id="fileBtn">Choose File</button>
+                    <input type="file" id="imageFile" accept="image/*">
+                    <span id="fileName">No file selected</span>
+                </div>
+                <img id="filePreview" class="file-preview" alt="Preview">
+                <p class="error-msg" id="imageError">Please select an image.</p>
+            </div>
+            <div class="form-group">
+                <label for="contentText">Text Content</label>
+                <textarea id="contentText" placeholder="Add a description or caption..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="linkUrl">Link URL (optional)</label>
+                <input type="url" id="linkUrl" placeholder="https://example.com">
+            </div>
+            <div class="form-group">
+                <label for="linkTitle">Link Title</label>
+                <input type="text" id="linkTitle" placeholder="View Gallery">
+            </div>
+<button class="btn" id="publishBtn">
+    Publish
+    <div class="progress-bar" id="progressBar">
+        <div class="progress-fill" id="progressFill"></div>
+    </div>
+</button>
+            <button class="btn btn-secondary" id="logoutBtn">Logout</button>
+            <div class="admin-list" id="contentList"></div>
+        </div>
+    </div>
+
+    <script>
+        const Storage = {
+            KEY: 'birthday_content',
+            save(data) { localStorage.setItem(this.KEY, JSON.stringify(data)); },
+            load() { const d = localStorage.getItem(this.KEY); return d ? JSON.parse(d) : null; }
+        };
+
+        const defaultContent = [
+            { id: '1', imageUrl: 'https://images.unsplash.com/photo-1530103862676-de3c9ef59afb?w=800', linkUrl: '', linkTitle: '', text: '' },
+            { id: '2', imageUrl: 'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=800', linkUrl: '', linkTitle: '', text: '' },
+            { id: '3', imageUrl: 'https://images.unsplash.com/photo-1519834785169-98be25ec3f84?w=800', linkUrl: '', linkTitle: '', text: '' }
+        ];
+
+        let content = Storage.load() || defaultContent;
+        const ADMIN_PASSWORD = 'admin123';
+
+        const themeToggle = document.getElementById('themeToggle');
+        const adminLink = document.getElementById('adminLink');
+        const adminLogin = document.getElementById('adminLogin');
+        const adminPanel = document.getElementById('adminPanel');
+        const loginBtn = document.getElementById('loginBtn');
+        const backBtn = document.getElementById('backBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const publishBtn = document.getElementById('publishBtn');
+        const passwordInput = document.getElementById('adminPassword');
+        const loginError = document.getElementById('loginError');
+        const imageUrlInput = document.getElementById('imageUrl');
+        const imageFileInput = document.getElementById('imageFile');
+        const fileBtn = document.getElementById('fileBtn');
+        const fileName = document.getElementById('fileName');
+        const filePreview = document.getElementById('filePreview');
+        const contentTextInput = document.getElementById('contentText');
+        const linkUrlInput = document.getElementById('linkUrl');
+        const linkTitleInput = document.getElementById('linkTitle');
+        const imageError = document.getElementById('imageError');
+        const textOnlyCheckbox = document.getElementById('textOnly');
+        const imageGroup = document.getElementById('imageGroup');
+        const contentList = document.getElementById('contentList');
+        const photoCarousel = document.getElementById('photoCarousel');
+        const momentSections = document.getElementById('momentSections');
+        const imageModal = document.getElementById('imageModal');
+        const modalImage = document.getElementById('modalImage');
+        const modalClose = document.getElementById('modalClose');
+
+        // Modal functionality
+        function openModal(imageSrc) {
+            modalImage.src = imageSrc;
+            imageModal.classList.add('show');
+        }
+
+        function closeModal() {
+            imageModal.classList.remove('show');
+        }
+
+        modalClose.onclick = closeModal;
+        imageModal.onclick = (e) => { if (e.target === imageModal) closeModal(); };
+
+        function setTheme(theme) {
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+
+        function initTheme() {
+            const saved = localStorage.getItem('theme');
+            if (saved) { setTheme(saved); return; }
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            setTheme(prefersDark ? 'dark' : 'light');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            const current = document.body.getAttribute('data-theme');
+            setTheme(current === 'light' ? 'dark' : 'light');
+        });
+
+        let selectedImageUrl = '';
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 5MB limit
+
+
+// Compress image function
+function compressImage(file, maxWidth = 1200, quality = 0.8) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+
+        img.onload = () => {
+            let { width, height } = img;
+            if (width > maxWidth) {
+                height = (height * maxWidth) / width;
+                width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(resolve, 'image/jpeg', quality);
+        };
+
+        img.src = URL.createObjectURL(file);
+    });
+}
+
+fileBtn.addEventListener('click', () => {
+    imageFileInput.click();
+});
+
+imageFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) {
+        fileName.textContent = 'No file selected';
+        filePreview.style.display = 'none';
+        selectedImageUrl = '';
+        return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+        alert('File too large! Please select an image under 5MB.');
+        e.target.value = '';
+        return;
+    }
+
+    fileName.textContent = 'Processing image...';
+
+    try {
+        const compressedBlob = await compressImage(file);
+        const reader = new FileReader();
+
+        reader.onload = (e) => {
+            selectedImageUrl = e.target.result;
+            filePreview.src = selectedImageUrl;
+            filePreview.style.display = 'block';
+            fileName.textContent = `Compressed: ${(compressedBlob.size / 1024 / 1024).toFixed(1)}MB`;
+            imageUrlInput.value = '';
+        };
+
+        reader.readAsDataURL(compressedBlob);
+    } catch (error) {
+        console.error('Error processing image:', error);
+        alert('Error processing image. Please try again.');
+        fileName.textContent = 'No file selected';
+        filePreview.style.display = 'none';
+        selectedImageUrl = '';
+    }
+});
+        // Toggle image fields based on text-only checkbox
+        textOnlyCheckbox.addEventListener('change', () => {
+            imageGroup.style.display = textOnlyCheckbox.checked ? 'none' : 'block';
+        });
+
+        function renderFeed() {
+            photoCarousel.innerHTML = '';
+            momentSections.innerHTML = '';
+
+            content.forEach((item, index) => {
+                if (item.text && !item.imageUrl) {
+                    // Text-only item
+                    const textDiv = document.createElement('div');
+                    textDiv.className = 'text-item reveal';
+                    textDiv.style.transitionDelay = `${index * 0.15}s`;
+                    textDiv.innerHTML = `<div class="text-content">${item.text}</div>`;
+                    momentSections.appendChild(textDiv);
+                } else if (item.imageUrl) {
+                    if (index < 3) {
+                        // Carousel item
+                        const div = document.createElement('div');
+                        div.className = 'carousel-item';
+                        div.style.transitionDelay = `${index * 0.1}s`;
+                        div.onclick = () => openModal(item.imageUrl);
+                        
+                        div.innerHTML = `
+                            <img src="${item.imageUrl}" alt="Memory ${index + 1}" loading="lazy" onerror="this.classList.add('error')">
+                            <div class="placeholder">Image unavailable</div>
+                            ${item.text ? `<div class="content-text">${item.text}</div>` : ''}
+                            ${item.linkUrl ? `<div class="carousel-overlay"><a href="${item.linkUrl}" class="carousel-cta" target="_blank">${item.linkTitle || 'View'} <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></div>` : ''}
+                        `;
+                        
+                        photoCarousel.appendChild(div);
+                    } else {
+                        // Full-width section
+                        const div = document.createElement('div');
+                        div.className = 'full-section reveal';
+                        div.style.transitionDelay = `${(index - 2) * 0.15}s`;
+                        div.onclick = () => openModal(item.imageUrl);
+                        
+                        div.innerHTML = `
+                            <span class="section-caption">Moment ${index - 2}</span>
+                            <img src="${item.imageUrl}" alt="Moment ${index - 2}" loading="lazy" onerror="this.classList.add('error')">
+                            <div class="placeholder">Image unavailable</div>
+                            ${item.text ? `<div class="content-text">${item.text}</div>` : ''}
+                            ${item.linkUrl ? `<div class="overlay"><a href="${item.linkUrl}" class="full-cta" target="_blank">${item.linkTitle || 'Explore'} <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></div>` : ''}
+                        `;
+                        
+                        momentSections.appendChild(div);
+                    }
+                }
+            });
+
+            photoCarousel.style.display = 'none';
+            momentSections.style.display = 'none';
+            requestAnimationFrame(() => {
+                photoCarousel.style.display = 'flex';
+                momentSections.style.display = 'block';
+                requestAnimationFrame(triggerAnimations);
+            });
+        }
+
+        function triggerAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.carousel-item, .full-section, .text-item, .section-title, .reveal').forEach(el => observer.observe(el));
+        }
+
+        function renderAdminList() {
+            if (content.length === 0) {
+                contentList.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">No content yet. Add some above.</p>';
+                return;
+            }
+
+            contentList.innerHTML = content.map((item, index) => `
+                <div class="admin-item">
+                    ${item.imageUrl ? `<img src="${item.imageUrl}" alt="" onerror="this.style.display='none'">` : '<div style="width:60px;height:60px;background:var(--bg-secondary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:0.75rem;">Text</div>'}
+                    <div class="admin-item-info">
+                        <div class="admin-item-title">${item.linkTitle || 'No title'}</div>
+                        <div class="admin-item-link">${item.linkUrl || 'No link'}</div>
+                        ${item.text ? `<div class="admin-item-text">${item.text}</div>` : ''}
+                    </div>
+                    <div class="item-controls">
+                        <button class="order-btn" data-index="${index}" data-direction="up" ${index === 0 ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z"/></svg>
+                        </button>
+                        <button class="order-btn" data-index="${index}" data-direction="down" ${index === content.length - 1 ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+                        </button>
+                        <button class="delete-btn" data-id="${item.id}">
+                            <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.order-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const index = parseInt(btn.dataset.index);
+                    const direction = btn.dataset.direction;
+                    
+                    if (direction === 'up' && index > 0) {
+                        [content[index], content[index - 1]] = [content[index - 1], content[index]];
+                    } else if (direction === 'down' && index < content.length - 1) {
+                        [content[index], content[index + 1]] = [content[index + 1], content[index]];
+                    }
+                    
+                    Storage.save(content);
+                    renderFeed();
+                    renderAdminList();
+                };
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.onclick = () => {
+                    content = content.filter(item => item.id !== btn.dataset.id);
+                    Storage.save(content);
+                    renderFeed();
+                    renderAdminList();
+                };
+            });
+        }
+
+        function showAdminLogin() {
+            adminLogin.classList.add('active');
+            adminPanel.classList.remove('active');
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+
+        function showAdminPanel() {
+            adminLogin.classList.remove('active');
+            adminPanel.classList.add('active');
+            renderAdminList();
+        }
+
+        function showMainSite() {
+            adminLogin.classList.remove('active');
+            adminPanel.classList.remove('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        adminLink.onclick = (e) => { e.preventDefault(); showAdminLogin(); };
+        backBtn.onclick = (e) => { e.preventDefault(); showMainSite(); };
+        logoutBtn.onclick = (e) => { e.preventDefault(); showMainSite(); };
+
+        loginBtn.onclick = (e) => {
+            e.preventDefault();
+            if (passwordInput.value === ADMIN_PASSWORD) {
+                showAdminPanel();
+            } else {
+                passwordInput.value = '';
+                passwordInput.classList.add('error');
+                loginError.classList.add('show');
+            }
+        };
+
+        passwordInput.onkeypress = (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+            passwordInput.classList.remove('error');
+            loginError.classList.remove('show');
+        };
+publishBtn.onclick = (e) => {
+    e.preventDefault();
+    const imageUrl = imageUrlInput.value.trim() || selectedImageUrl;
+    const textContent = contentTextInput.value.trim();
+    
+    if (!textOnlyCheckbox.checked && !imageUrl) {
+        imageUrlInput.classList.add('error');
+        imageError.classList.add('show');
+        return;
+    }
+
+    if (textOnlyCheckbox.checked && !textContent) {
+        contentTextInput.classList.add('error');
+        return;
+    }
+
+    imageUrlInput.classList.remove('error');
+    imageError.classList.remove('show');
+    contentTextInput.classList.remove('error');
+
+    const original = publishBtn.innerHTML;
+    publishBtn.disabled = true;
+    progressBar.style.display = 'block';
+    
+    setTimeout(() => {
+        const newItem = {
+            id: Date.now().toString(),
+            imageUrl: textOnlyCheckbox.checked ? '' : imageUrl,
+            linkUrl: linkUrlInput.value.trim(),
+            linkTitle: linkTitleInput.value.trim(),
+            text: textContent
+        };
+
+        content.unshift(newItem);
+        Storage.save(content);
+        renderFeed();
+        renderAdminList();
+
+        progressBar.style.display = 'none';
+        publishBtn.innerHTML = '✓ Published!';
+        publishBtn.classList.add('btn-success');
+        publishBtn.disabled = false;
+
+        textOnlyCheckbox.checked = false;
+        imageGroup.style.display = 'block';
+        imageUrlInput.value = '';
+        selectedImageUrl = '';
+        fileName.textContent = 'No file selected';
+        filePreview.style.display = 'none';
+        contentTextInput.value = '';
+        linkUrlInput.value = '';
+        linkTitleInput.value = '';
+
+        setTimeout(() => {
+            if (publishBtn) {
+                publishBtn.innerHTML = original;
+                publishBtn.classList.remove('btn-success');
+            }
+        }, 1500);
+    }, 1500);
+};
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            renderFeed();
+        });
+    </script>
+</body>
+</html>
