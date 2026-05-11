@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Birthday Celebration</title>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <style>
+    :root{--bg-primary:#fafafa;--bg-secondary:#f0f0f0;--text-primary:#1a1a1a;--text-secondary:#666666;--accent:#006884;--accent-hover:#004d62;--overlay-bg:rgba(0,0,0,.4);--card-bg:#fff;--shadow:0 4px 20px rgba(0,0,0,.08);--transition:.4s cubic-bezier(.4,0,.2,1)}
+    [data-theme="dark"]{--bg-primary:#0d0d0d;--bg-secondary:#1a1a1a;--text-primary:#f0f0f0;--text-secondary:#a0a0a0;--card-bg:#141414;--shadow:0 4px 20px rgba(0,0,0,.4)}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html{overflow-x:hidden;overflow-y:auto;height:100%}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg-primary);color:var(--text-primary);line-height:1.6;overflow-x:hidden;overflow-y:auto;min-height:100vh;position:relative;margin:0;padding:0;transition:background var(--transition),color var(--transition)}
+    #startScreen{position:fixed;inset:0;background:var(--bg-primary);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100001;transition:opacity .6s,visibility .6s}
+    #startScreen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+    .start-content{text-align:center;max-width:500px;width:90%;padding:20px}
+    .start-content h1{font-size:clamp(2rem,7vw,4rem);font-weight:200;letter-spacing:.08em;margin-bottom:8px;background:linear-gradient(135deg,var(--text-primary),var(--accent));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .start-sub{font-size:clamp(.9rem,2.5vw,1.1rem);color:var(--text-secondary);margin-bottom:40px}
+    .room-input-box{width:100%;padding:14px 16px;background:var(--card-bg);border:1px solid var(--bg-secondary);border-radius:10px;font-size:1.1rem;color:var(--text-primary);text-align:center;letter-spacing:.2em;margin-bottom:16px;transition:border-color .3s,box-shadow .3s}
+    .room-input-box:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,104,132,.12)}
+    .room-btns{display:flex;gap:12px;width:100%;max-width:380px;margin:0 auto 12px}
+    .room-btns .btn{flex:1;padding:14px 20px;border-radius:10px;font-size:.95rem;font-weight:600;letter-spacing:.06em;cursor:pointer;border:none;transition:background .3s,transform .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+    .room-btns .btn:active{transform:scale(.97)}
+    .btn-create{background:var(--accent);color:#fff}
+    .btn-create:hover{background:var(--accent-hover)}
+    .btn-join{background:var(--bg-secondary);color:var(--text-primary)}
+    .btn-join:hover{background:var(--text-secondary);color:#fff}
+    .btn-enter-room{background:var(--accent);color:#fff;width:100%;max-width:380px;margin:0 auto;display:none}
+    .btn-enter-room:hover{background:var(--accent-hover)}
+    .room-error{color:#ff4444;font-size:.8rem;min-height:1.2em;margin-top:8px}
+    .room-code-badge{display:none;margin-top:20px;padding:12px 24px;background:var(--accent);color:#fff;border-radius:10px;font-size:1.4rem;font-weight:300;letter-spacing:.2em}
+    .start-hint{margin-top:30px;font-size:.75rem;color:var(--text-secondary);opacity:.6}
+    .room-join-row{display:none;flex-direction:column;align-items:center;gap:10px;margin-top:16px}
+    .room-join-row.show{display:flex}
+    .section{min-height:auto;padding:60px 20px;position:relative}
+    @media(min-width:768px){html{scroll-snap-type:y mandatory}.section{min-height:100vh;scroll-snap-align:start}}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10000;justify-content:center;align-items:center;animation:fadeIn .3s}
+    .modal.show{display:flex}
+    .modal-content{position:relative;max-width:90vw;max-height:90vh;animation:scaleIn .3s}
+    @keyframes scaleIn{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+    .modal-content img{max-width:100%;max-height:90vh;object-fit:contain;border-radius:8px}
+    .modal-close{position:absolute;top:-40px;right:0;background:0 0;border:none;color:#fff;font-size:2rem;cursor:pointer;padding:10px;border-radius:50%;background:rgba(0,0,0,.5);width:40px;height:40px;display:flex;align-items:center;justify-content:center}
+    .modal-close:hover{background:rgba(0,0,0,.8)}
+    .theme-toggle{position:fixed;top:20px;right:20px;z-index:1000;background:var(--card-bg);border:none;width:48px;height:48px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow);transition:transform .3s}
+    .theme-toggle:hover{transform:scale(1.1)}
+    .theme-toggle svg{width:24px;height:24px;fill:var(--accent)}
+    .theme-toggle .sun-icon{display:none}
+    .theme-toggle .moon-icon{display:block}
+    [data-theme="dark"] .theme-toggle .sun-icon{display:block}
+    [data-theme="dark"] .theme-toggle .moon-icon{display:none}
+    .hero{height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px 20px;scroll-snap-align:start;background:linear-gradient(135deg,var(--bg-primary),var(--bg-secondary));position:relative;overflow:hidden}
+    @media(min-width:768px){.hero{scroll-snap-align:start}}
+    .hero::before{content:'';position:absolute;width:200%;height:200%;background:radial-gradient(circle at 30% 30%,var(--accent) 0%,transparent 50%),radial-gradient(circle at 70% 70%,var(--accent) 0%,transparent 40%);opacity:.03;animation:float 20s ease-in-out infinite}
+    @keyframes float{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,-20px)}}
+    .hero-content{position:relative;z-index:1;opacity:0;transform:translateY(30px);animation:fadeUp 1s forwards .3s}
+    @keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+    .hero h1{font-size:clamp(2.5rem,8vw,5rem);font-weight:200;letter-spacing:.1em;margin-bottom:10px;background:linear-gradient(135deg,var(--text-primary),var(--accent));background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero .date{font-size:clamp(1rem,4vw,1.5rem);font-weight:300;color:var(--text-secondary);letter-spacing:.2em;margin-bottom:40px}
+    .scroll-hint{position:absolute;bottom:40px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;color:var(--text-secondary);font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;opacity:0;animation:fadeIn 1s forwards 1.5s}
+    @keyframes fadeIn{to{opacity:.6}}
+    .scroll-hint svg{width:24px;height:24px;fill:var(--text-secondary);animation:bounce 2s ease-in-out infinite}
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}
+    .section-inner{width:100%;max-width:100%}
+    .section-title{font-size:.75rem;font-weight:600;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:20px;padding:0 20px;opacity:0;transform:translateY(20px);transition:opacity .6s,transform .6s}
+    .section.visible .section-title{opacity:1;transform:translateY(0)}
+    .carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;gap:16px;padding:20px}
+    .carousel::-webkit-scrollbar{display:none}
+    .carousel-item{flex:0 0 85%;max-width:400px;scroll-snap-align:center;position:relative;border-radius:16px;overflow:hidden;box-shadow:var(--shadow);background:var(--card-bg);opacity:0;transform:translateY(30px);transition:opacity .6s,transform .6s;cursor:pointer}
+    .carousel-item.visible{opacity:1;transform:translateY(0)}
+    .carousel-item:nth-child(1){transition-delay:.1s}
+    .carousel-item:nth-child(2){transition-delay:.2s}
+    .carousel-item:nth-child(3){transition-delay:.3s}
+    .carousel-item img{width:100%;height:400px;object-fit:cover;background:var(--bg-secondary);transition:transform .3s}
+    .carousel-item:hover img{transform:scale(1.05)}
+    .carousel-item .placeholder{width:100%;height:400px;display:none;align-items:center;justify-content:center;background:var(--bg-secondary);color:var(--text-secondary)}
+    .carousel-item img.error{display:none}
+    .carousel-item img.error+.placeholder{display:flex}
+    .carousel-overlay{position:absolute;bottom:0;left:0;right:0;padding:30px 20px;background:linear-gradient(to top,rgba(0,0,0,.7),transparent)}
+    .carousel-cta{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:var(--overlay-bg);color:#fff;text-decoration:none;border-radius:30px;font-size:.875rem;font-weight:500;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2)}
+    .carousel-cta:hover{background:var(--accent);transform:scale(1.05)}
+    .carousel-cta svg{width:16px;height:16px;fill:currentColor}
+    .text-item{background:var(--card-bg);border-radius:16px;padding:40px 30px;margin-bottom:20px;box-shadow:var(--shadow);text-align:center}
+    .text-item .text-content{font-size:1.2rem;line-height:1.6;color:var(--text-primary)}
+    .full-section{width:100%;position:relative;aspect-ratio:4/5;max-height:80vh;background:var(--card-bg);margin-bottom:20px;cursor:pointer}
+    .full-section img{width:100%;height:100%;object-fit:cover;background:var(--bg-secondary);transition:transform .3s}
+    .full-section:hover img{transform:scale(1.05)}
+    .full-section .placeholder{width:100%;height:100%;display:none;align-items:center;justify-content:center;background:var(--bg-secondary);color:var(--text-secondary)}
+    .full-section img.error{display:none}
+    .full-section img.error+.placeholder{display:flex}
+    .full-section .overlay{position:absolute;bottom:0;left:0;right:0;padding:40px 20px;background:linear-gradient(to top,rgba(0,0,0,.6),transparent);display:flex;justify-content:center}
+    .full-cta{padding:14px 32px;background:var(--accent);color:#fff;text-decoration:none;border-radius:30px;font-size:1rem;font-weight:500;display:inline-flex;align-items:center;gap:10px}
+    .full-cta:hover{background:var(--accent-hover);transform:translateY(-2px)}
+    .full-cta svg{width:18px;height:18px;fill:currentColor}
+    .section-caption{position:absolute;top:20px;left:20px;font-size:.7rem;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.4);padding:8px 16px;border-radius:20px;backdrop-filter:blur(10px)}
+    .content-text{position:absolute;bottom:0;left:0;right:0;padding:20px;background:linear-gradient(to top,rgba(0,0,0,.8),transparent);color:#fff;font-size:.875rem;line-height:1.5}
+    .message-section{text-align:center;max-width:600px;margin:0 auto}
+    .message-section h2{font-size:clamp(1.5rem,5vw,2rem);font-weight:200;margin-bottom:20px;color:var(--accent)}
+    .message-section p{font-size:clamp(1rem,3vw,1.125rem);line-height:1.8;color:var(--text-secondary)}
+    .footer{padding:60px 20px;text-align:center;background:var(--bg-secondary)}
+    .footer p{font-size:.875rem;color:var(--text-secondary);margin-bottom:20px}
+    .footer-link{color:var(--accent);text-decoration:none;font-size:.75rem;letter-spacing:.1em;cursor:pointer}
+    .footer-link:hover{opacity:.7}
+    .admin-container{display:none;min-height:100vh;padding:60px 20px;background:var(--bg-primary)}
+    .admin-container.active{display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .admin-box{width:100%;max-width:500px;padding:40px 20px}
+    .admin-box h3{font-size:1.5rem;font-weight:300;margin-bottom:30px;text-align:center;color:var(--accent)}
+    .form-group{margin-bottom:20px}
+    .form-group label{display:block;font-size:.75rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:8px}
+    .form-group input,.form-group textarea{width:100%;padding:14px 16px;background:var(--card-bg);border:1px solid var(--bg-secondary);border-radius:10px;font-size:1rem;color:var(--text-primary)}
+    .form-group input:focus,.form-group textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,104,132,.1)}
+    .form-group input.error,.form-group textarea.error{border-color:#ff4444}
+    .form-group textarea{resize:vertical;min-height:80px}
+    .error-msg{color:#ff4444;font-size:.75rem;margin-top:8px;display:none}
+    .error-msg.show{display:block}
+    .file-input{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .file-input input[type="file"]{display:none}
+    .file-btn{padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--bg-secondary);border-radius:10px;cursor:pointer;font-size:.875rem}
+    .file-btn:hover{background:var(--text-secondary);color:#fff}
+    .file-preview{margin-top:10px;max-width:100%;height:auto;display:none;border-radius:10px}
+    .checkbox-group{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+    .checkbox-group input[type="checkbox"]{width:18px;height:18px}
+    .checkbox-group label{font-size:.875rem;margin-bottom:0}
+    .btn{width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:.875rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:background .3s;display:flex;align-items:center;justify-content:center;gap:10px;position:relative}
+    .btn:hover{background:var(--accent-hover)}
+    .btn:disabled{opacity:.7;cursor:not-allowed}
+    .btn-secondary{background:var(--bg-secondary);color:var(--text-primary);margin-top:10px}
+    .btn-secondary:hover{background:var(--text-secondary);color:#fff}
+    .btn-success{background:#22c55e}
+    .btn-success:hover{background:#16a34a}
+    .admin-list{margin-top:30px;width:100%;max-width:500px}
+    .admin-item{background:var(--card-bg);border-radius:12px;padding:16px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+    .admin-item img{width:60px;height:60px;object-fit:cover;border-radius:8px;background:var(--bg-secondary)}
+    .admin-item-info{flex:1;min-width:0}
+    .admin-item-title{font-size:.875rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .admin-item-link{font-size:.75rem;color:var(--accent);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .admin-item-text{font-size:.75rem;color:var(--text-secondary);margin-top:4px}
+    .item-controls{display:flex;flex-direction:column;gap:8px}
+    .order-btn{width:32px;height:32px;background:var(--bg-secondary);border:none;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .order-btn:hover{background:var(--text-secondary);color:#fff}
+    .order-btn svg{width:16px;height:16px}
+    .delete-btn{width:36px;height:36px;background:#ff4444;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+    .delete-btn:hover{background:#cc3333}
+    .delete-btn svg{width:16px;height:16px;fill:#fff}
+    .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-radius:50%;border-top-color:#fff;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .reveal{opacity:0;transform:translateY(40px);transition:opacity .8s,transform .8s}
+    .reveal.visible{opacity:1;transform:translateY(0)}
+    .progress-bar{width:100%;height:4px;background:var(--bg-secondary);border-radius:2px;overflow:hidden;margin-top:15px;display:none}
+    .progress-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .3s;animation:progress 2s ease-in-out infinite}
+    @keyframes progress{0%{width:0%}50%{width:70%}100%{width:100%}}
+    @media(min-width:768px){.hero h1{font-size:4rem}.full-section{aspect-ratio:16/9}.carousel-item{flex:0 0 45%}}
+    @media(min-width:1024px){.carousel-item{flex:0 0 30%;max-width:500px}}
+    </style>
+</head>
+<body data-theme="light">
+
+<!-- ROOM LOBBY -->
+<div id="startScreen">
+<div class="start-content">
+<h1>&#127873; Martin Oslava Tutorial</h1>
+<p class="start-sub">16.&#8211;17. 5. 2026</p>
+<div class="room-btns">
+<button class="btn btn-create" id="createRoomBtn">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+Create Room</button>
+<button class="btn btn-join" id="showJoinBtn">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+Join Room</button>
+</div>
+<div class="room-join-row" id="joinRow">
+<input type="text" class="room-input-box" id="roomCodeInput" placeholder="Enter 6-digit code" maxlength="6" autocomplete="off" spellcheck="false">
+<button class="btn btn-enter-room" id="joinConfirmBtn">Join Room</button>
+</div>
+<div class="room-code-badge" id="roomCodeBadge"><span id="roomCodeDisplay"></span></div>
+<p class="room-error" id="roomError"></p>
+<p class="start-hint">Share the room code so guests can join</p>
+</div>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="imageModal">
+<button class="modal-close" id="modalClose">&times;</button>
+<div class="modal-content"><img id="modalImage" src="" alt=""></div>
+</div>
+
+<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+<svg class="moon-icon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+<svg class="sun-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" stroke-width="2"/><line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" stroke-width="2"/><line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" stroke-width="2"/><line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" stroke-width="2"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" stroke-width="2"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" stroke-width="2"/></svg>
+</button>
+
+<section class="hero" id="heroSection">
+<div class="hero-content">
+<h1>MARTIN OSLAVA TUTORIAL</h1>
+<p class="date">16.-17.5. 2026</p>
+</div>
+<div class="scroll-hint"><span>Scrolluj fatassaku</span><svg viewBox="0 0 24 24"><path d="M7 13l5 5 5-5M7 6l5 5 5-5"/></svg></div>
+</section>
+
+<section class="section" id="gallerySection"><div class="section-inner"><p class="section-title">Memories</p><div class="carousel" id="photoCarousel"></div></div></section>
+<section class="section" id="momentsSection"><div class="section-inner" id="momentSections"></div></section>
+
+<footer class="footer" id="footerSection"><p>Tohle vas uz nezajima</p><span class="footer-link" id="adminLink">Admin Access</span></footer>
+
+<div class="admin-container" id="adminLogin"><div class="admin-box"><h3>Admin Access</h3><div class="form-group"><label for="adminPassword">Password</label><input type="password" id="adminPassword" placeholder="Enter password"><p class="error-msg" id="loginError">Incorrect password.</p></div><button class="btn" id="loginBtn">Login</button><button class="btn btn-secondary" id="backBtn">Back to Site</button></div></div>
+
+<div class="admin-container" id="adminPanel"><div class="admin-box"><h3>Content Management</h3><div class="checkbox-group"><input type="checkbox" id="textOnly"><label for="textOnly">Text only</label></div><div class="form-group" id="imageGroup"><label for="imageUrl">Image URL or Upload</label><input type="url" id="imageUrl" placeholder="https://example.com/image.jpg"><div class="file-input"><button class="file-btn" id="fileBtn">Choose File</button><input type="file" id="imageFile" accept="image/*"><span id="fileName">No file selected</span></div><img id="filePreview" class="file-preview" alt="Preview"><p class="error-msg" id="imageError">Please select an image.</p></div><div class="form-group"><label for="contentText">Text Content</label><textarea id="contentText" placeholder="Add a description..."></textarea></div><div class="form-group"><label for="linkUrl">Link URL</label><input type="url" id="linkUrl" placeholder="https://example.com"></div><div class="form-group"><label for="linkTitle">Link Title</label><input type="text" id="linkTitle" placeholder="View Gallery"></div><button class="btn" id="publishBtn">Publish<div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div></button><button class="btn btn-secondary" id="logoutBtn">Logout</button><div class="admin-list" id="contentList"></div></div></div>
+
+<script>
+// =========== PUSHER CONFIG ===========
+// 1. Go to https://pusher.com and create a FREE account
+// 2. Create a new Channels app
+// 3. Copy your Key and Cluster from the App Keys section
+// 4. Go to App Settings > Enable "Client events"
+// 5. Paste your values below
+
+const PUSHER_APP_KEY = '800bcdd344de44bdff50';
+const PUSHER_CLUSTER = 'eu';
+
+let pusher = null;
+let currentChannel = null;
+let currentRoomCode = null;
+let isAdmin = false;
+const ADMIN_PASSWORD = 'admin123';
+
+// Init Pusher
+if (PUSHER_APP_KEY !== 'REPLACE_WITH_YOUR_PUSHER_KEY') {
+    pusher = new Pusher(PUSHER_APP_KEY, {
+        cluster: PUSHER_CLUSTER,
+        encrypted: true
+    });
+}
+
+// =========== ROOM HELPERS ===========
+function generateRoomCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+    return code;
+}
+function getRoomFromURL() { return new URLSearchParams(window.location.search).get('room'); }
+function setRoomInURL(code) { const url = new URL(window.location); url.searchParams.set('room', code); window.history.replaceState({}, '', url); }
+function clearRoomFromURL() { const url = new URL(window.location); url.searchParams.delete('room'); window.history.replaceState({}, '', url); }
+
+// =========== DOM ELEMENTS ===========
+const startScreen = document.getElementById('startScreen');
+const createRoomBtn = document.getElementById('createRoomBtn');
+const showJoinBtn = document.getElementById('showJoinBtn');
+const joinRow = document.getElementById('joinRow');
+const roomCodeInput = document.getElementById('roomCodeInput');
+const joinConfirmBtn = document.getElementById('joinConfirmBtn');
+const roomError = document.getElementById('roomError');
+const roomCodeBadge = document.getElementById('roomCodeBadge');
+const roomCodeDisplay = document.getElementById('roomCodeDisplay');
+const adminLink = document.getElementById('adminLink');
+const adminLogin = document.getElementById('adminLogin');
+const adminPanel = document.getElementById('adminPanel');
+const loginBtn = document.getElementById('loginBtn');
+const backBtn = document.getElementById('backBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const publishBtn = document.getElementById('publishBtn');
+const progressBar = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const passwordInput = document.getElementById('adminPassword');
+const loginError = document.getElementById('loginError');
+const imageUrlInput = document.getElementById('imageUrl');
+const imageFileInput = document.getElementById('imageFile');
+const fileBtn = document.getElementById('fileBtn');
+const fileNameEl = document.getElementById('fileName');
+const filePreview = document.getElementById('filePreview');
+const contentTextInput = document.getElementById('contentText');
+const linkUrlInput = document.getElementById('linkUrl');
+const linkTitleInput = document.getElementById('linkTitle');
+const imageError = document.getElementById('imageError');
+const textOnlyCheckbox = document.getElementById('textOnly');
+const imageGroup = document.getElementById('imageGroup');
+const contentList = document.getElementById('contentList');
+const photoCarousel = document.getElementById('photoCarousel');
+const momentSections = document.getElementById('momentSections');
+const imageModal = document.getElementById('imageModal');
+const modalImage = document.getElementById('modalImage');
+const modalClose = document.getElementById('modalClose');
+const themeToggle = document.getElementById('themeToggle');
+
+let content = [];
+let selectedImageUrl = '';
+
+// =========== ROOM LOBBY ===========
+createRoomBtn.addEventListener('click', () => {
+    roomError.textContent = '';
+    if (!pusher) {
+        roomError.textContent = 'Pusher not configured! Replace keys at top of script.';
+        return;
+    }
+    createRoomBtn.disabled = true;
+    createRoomBtn.innerHTML = '<span class="spinner"></span> Creating...';
+    const code = generateRoomCode();
+    currentRoomCode = code;
+    roomCodeDisplay.textContent = code;
+    roomCodeBadge.style.display = 'block';
+    setRoomInURL(code);
+    joinChannel(code);
+});
+
+showJoinBtn.addEventListener('click', () => {
+    joinRow.classList.toggle('show');
+    if (joinRow.classList.contains('show')) roomCodeInput.focus();
+});
+
+joinConfirmBtn.addEventListener('click', () => {
+    const code = roomCodeInput.value.trim().toUpperCase();
+    roomError.textContent = '';
+    if (!code || code.length < 4) { roomError.textContent = 'Enter a valid room code.'; return; }
+    if (!pusher) { roomError.textContent = 'Pusher not configured!'; return; }
+    currentRoomCode = code;
+    roomCodeDisplay.textContent = code;
+    roomCodeBadge.style.display = 'block';
+    setRoomInURL(code);
+    joinChannel(code);
+});
+
+roomCodeInput.addEventListener('keypress', e => { if (e.key === 'Enter') joinConfirmBtn.click(); });
+
+function joinChannel(code) {
+    currentChannel = pusher.subscribe('room-' + code);
+    currentChannel.bind('pusher:subscription_succeeded', () => {
+        enterRoom();
+    });
+    currentChannel.bind('pusher:subscription_error', (status) => {
+        roomError.textContent = 'Room error. Try again or create a new room.';
+        createRoomBtn.disabled = false;
+        createRoomBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Create Room';
+    });
+}
+
+function enterRoom() {
+    startScreen.classList.add('hidden');
+    initMainSite();
+    setRoomInURL(currentRoomCode);
+}
+
+function leaveRoom() {
+    if (currentChannel) { pusher.unsubscribe('room-' + currentRoomCode); currentChannel = null; }
+    currentRoomCode = null;
+    startScreen.classList.remove('hidden');
+    hideAdmin();
+    clearRoomFromURL();
+    photoCarousel.innerHTML = '';
+    momentSections.innerHTML = '';
+    content = [];
+}
+
+// =========== PUSHER REAL-TIME ===========
+function startRealtimeListener() {
+    if (!currentChannel) return;
+    currentChannel.bind('client-new-content', data => {
+        content = data.content || [];
+        renderFeed();
+        if (isAdmin) renderAdminList();
+    });
+    currentChannel.bind('client-content-updated', data => {
+        content = data.content || [];
+        renderFeed();
+        if (isAdmin) renderAdminList();
+    });
+}
+
+// =========== THEME ===========
+function setTheme(theme) { document.body.setAttribute('data-theme', theme); localStorage.setItem('theme', theme); }
+function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved) { setTheme(saved); return; }
+    setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+}
+themeToggle.addEventListener('click', () => {
+    setTheme(document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light');
+});
+
+// =========== MODAL ===========
+function openModal(src) { modalImage.src = src; imageModal.classList.add('show'); }
+function closeModal() { imageModal.classList.remove('show'); }
+modalClose.onclick = closeModal;
+imageModal.onclick = e => { if (e.target === imageModal) closeModal(); };
+
+// =========== ADMIN ===========
+function showAdminLogin() { adminLogin.classList.add('active'); adminPanel.classList.remove('active'); passwordInput.value = ''; passwordInput.focus(); }
+function showAdminPanel() { isAdmin = true; adminLogin.classList.remove('active'); adminPanel.classList.add('active'); renderAdminList(); }
+function hideAdmin() { isAdmin = false; adminLogin.classList.remove('active'); adminPanel.classList.remove('active'); }
+
+adminLink.onclick = e => { e.preventDefault(); showAdminLogin(); };
+backBtn.onclick = e => { e.preventDefault(); hideAdmin(); };
+logoutBtn.onclick = e => { e.preventDefault(); hideAdmin(); };
+
+loginBtn.onclick = e => {
+    e.preventDefault();
+    if (passwordInput.value === ADMIN_PASSWORD) {
+        showAdminPanel();
+    } else {
+        passwordInput.value = '';
+        passwordInput.classList.add('error');
+        loginError.classList.add('show');
+    }
+};
+passwordInput.onkeypress = e => {
+    if (e.key === 'Enter') loginBtn.click();
+    passwordInput.classList.remove('error');
+    loginError.classList.remove('show');
+};
+
+textOnlyCheckbox.addEventListener('change', () => {
+    imageGroup.style.display = textOnlyCheckbox.checked ? 'none' : 'block';
+});
+
+// Image compress & upload
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+function compressImage(file, maxWidth = 1200, quality = 0.8) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.onload = () => {
+            let { width, height } = img;
+            if (width > maxWidth) { height = (height * maxWidth) / width; width = maxWidth; }
+            canvas.width = width; canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            canvas.toBlob(resolve, 'image/jpeg', quality);
+        };
+        img.src = URL.createObjectURL(file);
+    });
+}
+fileBtn.addEventListener('click', () => imageFileInput.click());
+imageFileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) { fileNameEl.textContent = 'No file selected'; filePreview.style.display = 'none'; selectedImageUrl = ''; return; }
+    if (file.size > MAX_FILE_SIZE) { alert('File too large! Max 5MB.'); e.target.value = ''; return; }
+    fileNameEl.textContent = 'Processing...';
+    try {
+        const compressed = await compressImage(file);
+        const reader = new FileReader();
+        reader.onload = ev => {
+            selectedImageUrl = ev.target.result;
+            filePreview.src = selectedImageUrl;
+            filePreview.style.display = 'block';
+            fileNameEl.textContent = 'Compressed: ' + (compressed.size / 1024 / 1024).toFixed(1) + 'MB';
+            imageUrlInput.value = '';
+        };
+        reader.readAsDataURL(compressed);
+    } catch (error) {
+        alert('Error processing image.');
+        fileNameEl.textContent = 'No file selected';
+        filePreview.style.display = 'none';
+        selectedImageUrl = '';
+    }
+});
+
+// PUBLISH
+publishBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (!currentRoomCode || !currentChannel) { alert('You must be in a room to publish.'); return; }
+        const imageUrl = imageUrlInput.value.trim() || selectedImageUrl;
+    const textContent = contentTextInput.value.trim();
+    if (!textOnlyCheckbox.checked && !imageUrl) { imageUrlInput.classList.add('error'); imageError.classList.add('show'); return; }
+    if (textOnlyCheckbox.checked && !textContent) { contentTextInput.classList.add('error'); return; }
+    imageUrlInput.classList.remove('error');
+    imageError.classList.remove('show');
+    contentTextInput.classList.remove('error');
+
+    const original = publishBtn.innerHTML;
+    publishBtn.disabled = true;
+    progressBar.style.display = 'block';
+
+    setTimeout(async () => {
+        const newItem = {
+            id: Date.now().toString(),
+            imageUrl: textOnlyCheckbox.checked ? '' : imageUrl,
+            text: textContent,
+            linkUrl: linkUrlInput.value.trim(),
+            linkTitle: linkTitleInput.value.trim(),
+            sort: Date.now()
+        };
+        content.unshift(newItem);
+        if (currentChannel) {
+            currentChannel.trigger('client-new-content', { content: content });
+        }
+        renderFeed();
+        renderAdminList();
+        progressBar.style.display = 'none';
+        publishBtn.innerHTML = '✓ Published!';
+        publishBtn.classList.add('btn-success');
+        publishBtn.disabled = false;
+        textOnlyCheckbox.checked = false;
+        imageGroup.style.display = 'block';
+        imageUrlInput.value = '';
+        selectedImageUrl = '';
+        fileNameEl.textContent = 'No file selected';
+        filePreview.style.display = 'none';
+        contentTextInput.value = '';
+        linkUrlInput.value = '';
+        linkTitleInput.value = '';
+        setTimeout(() => {
+            publishBtn.innerHTML = original;
+            publishBtn.classList.remove('btn-success');
+        }, 1500);
+    }, 1500);
+});
+
+function setupDeleteButtons() {
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.onclick = () => {
+            if (!currentRoomCode) return;
+            content = content.filter(item => item.id !== btn.dataset.id);
+            if (currentChannel) {
+                currentChannel.trigger('client-content-updated', { content: content });
+            }
+            renderFeed();
+            renderAdminList();
+        };
+    });
+}
+function setupOrderButtons() {
+    document.querySelectorAll('.order-btn').forEach(btn => {
+        btn.onclick = () => {
+            if (!currentRoomCode) return;
+            const idx = parseInt(btn.dataset.index);
+            const dir = btn.dataset.direction;
+            if ((dir === 'up' && idx === 0) || (dir === 'down' && idx === content.length - 1)) return;
+            const swapIdx = dir === 'up' ? idx - 1 : idx + 1;
+            const tmp = content[idx];
+            content[idx] = content[swapIdx];
+            content[swapIdx] = tmp;
+            if (currentChannel) {
+                currentChannel.trigger('client-content-updated', { content: content });
+            }
+            renderFeed();
+            renderAdminList();
+        };
+    });
+}
+
+function renderFeed() {
+    photoCarousel.innerHTML = '';
+    momentSections.innerHTML = '';
+    content.forEach((item, index) => {
+        if (!item) return;
+        if (item.text && !item.imageUrl) {
+            const textDiv = document.createElement('div');
+            textDiv.className = 'text-item reveal';
+            textDiv.style.transitionDelay = (index * 0.15) + 's';
+            textDiv.innerHTML = '<div class="text-content">' + item.text + '</div>';
+            momentSections.appendChild(textDiv);
+        } else if (item.imageUrl) {
+            if (index < 3) {
+                const div = document.createElement('div');
+                div.className = 'carousel-item';
+                div.style.transitionDelay = (index * 0.1) + 's';
+                div.onclick = () => openModal(item.imageUrl);
+                div.innerHTML = '<img src="' + item.imageUrl + '" alt="Memory ' + (index + 1) + '" loading="lazy" onerror="this.classList.add(\'error\')"><div class="placeholder">Image unavailable</div>' + (item.text ? '<div class="content-text">' + item.text + '</div>' : '') + (item.linkUrl ? '<div class="carousel-overlay"><a href="' + item.linkUrl + '" class="carousel-cta" target="_blank">' + (item.linkTitle || 'View') + ' <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></div>' : '');
+                photoCarousel.appendChild(div);
+            } else {
+                const div = document.createElement('div');
+                div.className = 'full-section reveal';
+                div.style.transitionDelay = ((index - 2) * 0.15) + 's';
+                div.onclick = () => openModal(item.imageUrl);
+                div.innerHTML = '<span class="section-caption">Moment ' + (index - 2) + '</span><img src="' + item.imageUrl + '" alt="Moment" loading="lazy" onerror="this.classList.add(\'error\')"><div class="placeholder">Image unavailable</div>' + (item.text ? '<div class="content-text">' + item.text + '</div>' : '') + (item.linkUrl ? '<div class="overlay"><a href="' + item.linkUrl + '" class="full-cta" target="_blank">' + (item.linkTitle || 'Explore') + ' <svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a></div>' : '');
+                momentSections.appendChild(div);
+            }
+        }
+    });
+    photoCarousel.style.display = 'none';
+    momentSections.style.display = 'none';
+    requestAnimationFrame(() => {
+        photoCarousel.style.display = 'flex';
+        momentSections.style.display = 'block';
+        requestAnimationFrame(triggerAnimations);
+    });
+}
+
+function triggerAnimations() {
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.carousel-item, .full-section, .text-item, .section-title, .reveal').forEach(el => observer.observe(el));
+}
+
+function renderAdminList() {
+    if (content.length === 0) { contentList.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:20px;">No content yet. Add some above.</p>'; return; }
+    contentList.innerHTML = content.map((item, index) =>
+        '<div class="admin-item">' +
+        (item.imageUrl ? '<img src="' + item.imageUrl + '" alt="" onerror="this.style.display=\'none\'">' : '<div style="width:60px;height:60px;background:var(--bg-secondary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--text-secondary);font-size:0.75rem;">Text</div>') +
+        '<div class="admin-item-info"><div class="admin-item-title">' + (item.linkTitle || 'No title') + '</div><div class="admin-item-link">' + (item.linkUrl || 'No link') + '</div>' + (item.text ? '<div class="admin-item-text">' + item.text + '</div>' : '') + '</div>' +
+        '<div class="item-controls"><button class="order-btn" data-index="' + index + '" data-direction="up" ' + (index === 0 ? 'disabled' : '') + '><svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5z"/></svg></button><button class="order-btn" data-index="' + index + '" data-direction="down" ' + (index === content.length - 1 ? 'disabled' : '') + '><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg></button><button class="delete-btn" data-id="' + item.id + '"><svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></div></div>'
+    ).join('');
+    setupDeleteButtons();
+    setupOrderButtons();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    initTheme();
+    const roomInUrl = getRoomFromURL();
+    if (roomInUrl && pusher) {
+        currentRoomCode = roomInUrl;
+        roomCodeDisplay.textContent = roomInUrl;
+        roomCodeBadge.style.display = 'block';
+        joinChannel(roomInUrl);
+    }
+});
+    </script>
+</body>
+</html>
